@@ -1,11 +1,39 @@
 const express = require('express');
+const sql = require('mssql');
 const app = express();
 
+// Use the connection string from the environment variable
+const sqlConfig = process.env.SQL_CONNECTION_STRING;
+
+// Declare the dbConnectionStatus in the appropriate scope
+let dbConnectionStatus = 'Database connection has not been established yet.';
+
+// Function to connect to the database
+const connectToDatabase = async () => {
+    try {
+        await sql.connect(sqlConfig);
+        dbConnectionStatus = 'Database connection successful!';
+        console.log(dbConnectionStatus);
+    } catch (err) {
+        dbConnectionStatus = 'Database connection failed: ' + err.message;
+        console.error(dbConnectionStatus);
+        process.exit(1); // Exit the process if the database connection fails
+    }
+};
+
+// Connect to the database when the application starts
+connectToDatabase();
+
 app.get('/', (req, res) => {
-  res.send('Hello World from Azure App Service1');
+    const currentDateTime = new Date().toISOString();
+    res.json({
+        message: 'Hello World from Azure App Service1',
+        dbConnectionStatus: dbConnectionStatus,
+        currentDateTime: currentDateTime
+    });
 });
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+    console.log(`Server running on port ${port}`);
 });
